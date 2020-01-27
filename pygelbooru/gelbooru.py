@@ -171,6 +171,19 @@ class Gelbooru:
     #     payload = await self._request(str(endpoint))
     #     return payload
 
+    # TODO: Same as above; xml output only
+    # async def is_deleted(self, image_md5: str):
+    #     """
+    #     Check if an image has been deleted from Gelbooru
+    #
+    #     Args:
+    #         image_md5 (str): The md5 hash of the image to check
+    #
+    #     Returns:
+    #         bool
+    #     """
+    #     pass
+
     async def _request(self, url: str) -> List[dict]:
         async with aiohttp.ClientSession() as session:
             status_code, response = await self._fetch(session, url)
