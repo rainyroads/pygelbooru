@@ -79,7 +79,9 @@ class Gelbooru:
         except TypeError:
             raise GelbooruNotFoundException(f"Could not find a post with the ID {post_id}")
 
-    async def search_posts(self, *, tags: Optional[List[str]] = None, exclude_tags: Optional[List[str]] = None, limit: int = 100) -> List[GelbooruImage]:
+    async def search_posts(self, *, tags: Optional[List[str]] = None,
+                           exclude_tags: Optional[List[str]] = None,
+                           limit: int = 100) -> List[GelbooruImage]:
         """
         Search for images with the optionally specified tag(s)
 
@@ -112,7 +114,7 @@ class Gelbooru:
                        name_pattern: Optional[str] = None,
                        limit: int = 100,
                        sort_by: str = SORT_COUNT,
-                       sort_order: str = SORT_DESC) -> List[dict]:
+                       sort_order: str = SORT_DESC) -> Union[List[dict], dict]:
         """
         Get a list of tags, optionally filtered and sorted as needed
 
@@ -124,7 +126,7 @@ class Gelbooru:
             sort_order (): Sort order; either SORT_ASC or SORT_DESC
 
         Returns:
-            list of dict
+            list of dict or dict: Returns the first result if querying a single tag
         """
         endpoint = furl(self.BASE_URL)
         endpoint.args['page'] = 'dapi'
@@ -138,7 +140,7 @@ class Gelbooru:
             if isinstance(name, list):
                 endpoint.args['names'] = ' '.join([n.strip().lower().replace(' ', '_') for n in name])
             else:
-                endpoint.args['name'] = name
+                endpoint.args['name'] = name.strip().lower().replace(' ', '_')
         elif name_pattern:
             endpoint.args['name_pattern'] = name_pattern.strip().lower().replace(' ', '_')
 
@@ -147,7 +149,7 @@ class Gelbooru:
         endpoint.args['order'] = sort_order
 
         payload = await self._request(str(endpoint))
-        return payload
+        return payload[0] if isinstance(name, str) and payload else payload
 
     # TODO: This endpoint doesn't support json output; we will have to parse it as xml
     # async def get_comments(self, post_id: int) -> List[dict]:
