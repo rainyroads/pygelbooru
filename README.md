@@ -21,7 +21,7 @@ from pygelbooru import Gelbooru
 # API key/user ID is optional, but access may be limited without them
 gelbooru = Gelbooru('API_KEY', 'USER_ID')
 
-results = gelbooru.search_posts(tags=['dog ears', '1girl'], exclude_tags=['nude'])
+results = await gelbooru.search_posts(tags=['dog ears', '1girl'], exclude_tags=['nude'])
 [<GelbooruImage(id=5105386, filename='b77e69be0a4b...dde071dc.jpeg', owner='anon2003')>,
  <GelbooruImage(id=5105161, filename='bf169f891ebe...02bceb5e.jpeg', owner='cpee')>,
  <GelbooruImage(id=5104148, filename='46df3ebe2d41...4316d218e.jpg', owner='danbooru')>,
@@ -65,7 +65,7 @@ class GelbooruImage:
 ### Other methods
 In addition to searching for images, you can pull information on tags as follows,
 ```python
-gelbooru.tag_list(name='dog ears')
+await gelbooru.tag_list(name='dog ears')
 
 {'ambiguous': '0',
  'count': '22567',
