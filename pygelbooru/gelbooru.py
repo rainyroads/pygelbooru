@@ -72,12 +72,13 @@ class Gelbooru:
         except TypeError:
             raise GelbooruNotFoundException(f"Could not find a post with the ID {post_id}")
 
-    async def search_posts(self, *, tags: Optional[List[str]] = None, limit: int = 100) -> List[GelbooruImage]:
+    async def search_posts(self, *, tags: Optional[List[str]] = None, exclude_tags: Optional[List[str]] = None, limit: int = 100) -> List[GelbooruImage]:
         """
         Search for images with the optionally specified tag(s)
 
         Args:
-            tags (list): A list of tags to search for
+            tags (list of str): A list of tags to search for
+            exclude_tags (list of str): A list of tags to EXCLUDE from search results
             limit (int): Limit the number of results returned. Maximum value allowed is 100.
 
         Returns:
@@ -90,8 +91,12 @@ class Gelbooru:
         endpoint.args['json']   = '1'
         endpoint.args['limit']  = min(limit, 100)
 
-        if tags:
-            endpoint.args['tags'] = ' '.join(tag.strip().replace(' ', '_') for tag in tags)
+        # Apply basic tag formatting
+        tags = [tag.strip().lower().replace(' ', '_') for tag in tags] if tags else []
+        exclude_tags = ['-' + tag.strip().lstrip('-').lower().replace(' ', '_') for tag in exclude_tags] if exclude_tags else []
+
+        if tags or exclude_tags:
+            endpoint.args['tags'] = ' '.join(tags + exclude_tags)
 
         payload = await self._request(str(endpoint))
         return [GelbooruImage(p) for p in payload]
