@@ -46,6 +46,13 @@ class GelbooruImage:
 class Gelbooru:
     BASE_URL = 'https://gelbooru.com/'
 
+    SORT_COUNT = 'count'
+    SORT_DATE  = 'date'
+    SORT_NAME  = 'name'
+
+    SORT_ASC   = 'ASC'
+    SORT_DESC  = 'DESC'
+
     def __init__(self, api_key: Optional[str] = None):
         self._api_key = api_key
 
@@ -101,7 +108,48 @@ class Gelbooru:
         payload = await self._request(str(endpoint))
         return [GelbooruImage(p) for p in payload]
 
-    async def _request(self, url: str) -> dict:
+    async def tag_list(self, *, name: Union[str, List[str], None] = None,
+                       name_pattern: Optional[str] = None,
+                       limit: int = 100,
+                       sort_by: str = SORT_COUNT,
+                       sort_order: str = SORT_DESC) -> List[dict]:
+        """
+        Get a list of tags, optionally filtered and sorted as needed
+
+        Args:
+            name (str or list of str): A single tag name to query or a list of tags
+            name_pattern (str): A wildcard search for your query using LIKE. (choolgirl would act as *choolgirl* wildcard search.) Cannot be used with names.
+            limit (int): Limit the number of results returned. Maximum value allowed is 100.
+            sort_by (): Sort by either SORT_COUNT (tag usage count), SORT_NAME, or SORT_DATE
+            sort_order (): Sort order; either SORT_ASC or SORT_DESC
+
+        Returns:
+            list of dict
+        """
+        endpoint = furl(self.BASE_URL)
+        endpoint.args['page'] = 'dapi'
+        endpoint.args['s'] = 'tag'
+        endpoint.args['q'] = 'index'
+        endpoint.args['json'] = '1'
+        endpoint.args['limit'] = min(limit, 100)
+
+        # Name filtering
+        if name:
+            if isinstance(name, list):
+                endpoint.args['names'] = ' '.join([n.strip().lower().replace(' ', '_') for n in name])
+            else:
+                endpoint.args['name'] = name
+        elif name_pattern:
+            endpoint.args['name_pattern'] = name_pattern.strip().lower().replace(' ', '_')
+
+        # Sorting
+        endpoint.args['orderby'] = sort_by
+        endpoint.args['order'] = sort_order
+
+        payload = await self._request(str(endpoint))
+        return payload
+
+    async def _request(self, url: str) -> List[dict]:
         async with aiohttp.ClientSession() as session:
             status_code, response = await self._fetch(session, url)
 
@@ -110,6 +158,6 @@ class Gelbooru:
 
         return response
 
-    async def _fetch(self, session: aiohttp.ClientSession, url) -> Tuple[int, dict]:
+    async def _fetch(self, session: aiohttp.ClientSession, url) -> Tuple[int, List[dict]]:
         async with session.get(url) as response:
             return response.status, await response.json()
