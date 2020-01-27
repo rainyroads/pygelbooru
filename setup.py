@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 setup(
         name='pygelbooru',  # How you named your package folder (MyLib)
         packages=['pygelbooru'],  # Chose the same as "name"
-        version='0.1',  # Start with a small number and increase it with every change you make
+        version='0.2',  # Start with a small number and increase it with every change you make
         license='gpl-3.0',  # Chose a license from here: https://help.github.com/articles/licensing-a-repository
         description='PyGelbooru is an unofficial and lightweight asynchronous library for the Gelbooru API.',  # Give a short description about your library
         long_description=long_description,

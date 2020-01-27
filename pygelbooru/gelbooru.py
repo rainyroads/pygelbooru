@@ -53,8 +53,17 @@ class Gelbooru:
     SORT_ASC   = 'ASC'
     SORT_DESC  = 'DESC'
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, user_id: Optional[str] = None):
+        """
+        API credentials can be obtained here (registration required):
+        https://gelbooru.com/index.php?page=account&s=options
+
+        Args:
+            api_key (str): API Key
+            user_id (str): User ID
+        """
         self._api_key = api_key
+        self._user_id = user_id
 
     async def get_post(self, post_id: int) -> Optional[GelbooruImage]:
         """
@@ -66,11 +75,7 @@ class Gelbooru:
         Raises:
             GelbooruNotFoundException: Raised if Gelbooru returns an empty result for this query
         """
-        endpoint = furl(self.BASE_URL)
-        endpoint.args['page'] = 'dapi'
-        endpoint.args['s'] = 'post'
-        endpoint.args['q'] = 'index'
-        endpoint.args['json'] = '1'
+        endpoint = self._endpoint('post')
         endpoint.args['id'] = post_id
 
         payload = await self._request(str(endpoint))
@@ -93,11 +98,7 @@ class Gelbooru:
         Returns:
             list of GelbooruImage
         """
-        endpoint = furl(self.BASE_URL)
-        endpoint.args['page']   = 'dapi'
-        endpoint.args['s']      = 'post'
-        endpoint.args['q']      = 'index'
-        endpoint.args['json']   = '1'
+        endpoint = self._endpoint('post')
         endpoint.args['limit']  = min(limit, 100)
 
         # Apply basic tag formatting
@@ -128,11 +129,7 @@ class Gelbooru:
         Returns:
             list of dict or dict: Returns the first result if querying a single tag
         """
-        endpoint = furl(self.BASE_URL)
-        endpoint.args['page'] = 'dapi'
-        endpoint.args['s'] = 'tag'
-        endpoint.args['q'] = 'index'
-        endpoint.args['json'] = '1'
+        endpoint = self._endpoint('tag')
         endpoint.args['limit'] = min(limit, 100)
 
         # Name filtering
@@ -185,6 +182,21 @@ class Gelbooru:
     #         bool
     #     """
     #     pass
+
+    def _endpoint(self, s: str) -> furl:
+        endpoint = furl(self.BASE_URL)
+        endpoint.args['page'] = 'dapi'
+        endpoint.args['s'] = s
+        endpoint.args['q'] = 'index'
+        endpoint.args['json'] = '1'
+
+        # Append API key if available
+        if self._api_key:
+            endpoint.args['api_key'] = self._api_key
+        if self._user_id:
+            endpoint.args['user_id'] = self._user_id
+
+        return endpoint
 
     async def _request(self, url: str) -> List[dict]:
         async with aiohttp.ClientSession() as session:
