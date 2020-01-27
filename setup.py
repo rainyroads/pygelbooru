@@ -17,7 +17,7 @@ setup(
         author='Makoto',  # Type in your name
         author_email='FujiMakoto@users.noreply.github.com',  # Type in your E-Mail
         url='https://github.com/FujiMakoto/pygelbooru',  # Provide either the link to your github or to your website
-        download_url='https://github.com/FujiMakoto/pygelbooru/archive/0.1.tar.gz',
+        download_url='https://github.com/FujiMakoto/pygelbooru/archive/0.2.tar.gz',
         keywords=['gelbooru', 'anime', 'artwork', 'anime artwork', 'booru'],  # Keywords that define your package best
         install_requires=[
             'aiohttp',
