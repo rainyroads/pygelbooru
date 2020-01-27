@@ -149,6 +149,28 @@ class Gelbooru:
         payload = await self._request(str(endpoint))
         return payload
 
+    # TODO: This endpoint doesn't support json output; we will have to parse it as xml
+    # async def get_comments(self, post_id: int) -> List[dict]:
+    #     """
+    #     Get comments for the specified post ID
+    #
+    #     Args:
+    #         post_id (int): The Gelbooru post id
+    #
+    #     Returns:
+    #         list of dict
+    #     """
+    #     endpoint = furl(self.BASE_URL)
+    #     endpoint.args['page'] = 'dapi'
+    #     endpoint.args['s'] = 'comment'
+    #     endpoint.args['q'] = 'index'
+    #     endpoint.args['json'] = '1'
+    #
+    #     endpoint.args['post_id'] = post_id
+    #
+    #     payload = await self._request(str(endpoint))
+    #     return payload
+
     async def _request(self, url: str) -> List[dict]:
         async with aiohttp.ClientSession() as session:
             status_code, response = await self._fetch(session, url)
