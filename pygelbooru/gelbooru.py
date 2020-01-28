@@ -86,7 +86,7 @@ class Gelbooru:
 
     async def search_posts(self, *, tags: Optional[List[str]] = None,
                            exclude_tags: Optional[List[str]] = None,
-                           limit: int = 100) -> List[GelbooruImage]:
+                           limit: int = 100) -> Optional[List[GelbooruImage]]:
         """
         Search for images with the optionally specified tag(s)
 
@@ -109,7 +109,7 @@ class Gelbooru:
             endpoint.args['tags'] = ' '.join(tags + exclude_tags)
 
         payload = await self._request(str(endpoint))
-        return [GelbooruImage(p) for p in payload]
+        return [GelbooruImage(p) for p in payload] if payload else None
 
     async def tag_list(self, *, name: Union[str, List[str], None] = None,
                        name_pattern: Optional[str] = None,
