@@ -1,7 +1,9 @@
 import reprlib
+from pprint import pprint
 from typing import *
 
 import aiohttp
+import xmltodict
 from furl import furl
 
 
@@ -19,28 +21,61 @@ class GelbooruImage:
 
     Returns the image URL when cast to str
     """
-    def __init__(self, payload: dict):
-        self.id         = payload.get('id')
-        self.owner      = payload.get('owner')
-        self.created_at = payload.get('created_at')
-        self.file_url   = payload.get('file_url')
-        self.filename   = payload.get('image')
-        self.source     = payload.get('source') or None
-        self.hash       = payload.get('hash')
-        self.height     = payload.get('height')
-        self.width      = payload.get('width')
-        self.rating     = payload.get('q')
-        self.has_sample = payload.get('sample')
-        self.tags       = str(payload.get('tags')).split(' ')
-        self.change     = payload.get('change')
-        self.directory  = payload.get('directory')
+    def __init__(self, payload: dict, gelbooru):
+        self._gelbooru = gelbooru  # type: Gelbooru
+
+        from pprint import pprint
+        pprint(payload)
+        self.id             = payload.get('@id')
+        self.creator_id     = payload.get('@creator_id')
+        self.created_at     = payload.get('@created_at')
+        self.file_url       = payload.get('@file_url')
+        self.filename       = payload.get('@image')
+        self.source         = payload.get('@source') or None
+        self.hash           = payload.get('@hash')
+        self.height         = payload.get('@height')
+        self.width          = payload.get('@width')
+        self.rating         = payload.get('@rating')
+        self.has_sample     = payload.get('@sample')
+        self.has_comments   = payload.get('@has_comments')
+        self.has_notes      = payload.get('@has_notes')
+        self.tags           = str(payload.get('@tags')).split(' ')
+        self.change         = payload.get('@change')
+        self.directory      = payload.get('@directory')
+
+    async def get_comments(self):
+        # TODO
+        if not self.has_comments:
+            return []
 
     def __str__(self):
         return self.file_url
 
     def __repr__(self):
         rep = reprlib.Repr()
-        return f"<GelbooruImage(id={self.id}, filename={rep.repr(self.filename)}, owner={rep.repr(self.owner)})>"
+        return f"<GelbooruImage(id={self.id}, filename={rep.repr(self.filename)}, owner={rep.repr(self.creator_id)})>"
+
+
+class GelbooruTag():
+    """
+    Container for Gelbooru tag results.
+
+    Returns the tag name when cast to str
+    """
+    def __init__(self, payload: dict, gelbooru):
+        self._gelbooru = gelbooru  # type: Gelbooru
+
+        self.id         = payload.get('@id')
+        self.name       = payload.get('@name')
+        self.count      = int(payload.get('@count', 0))
+        self.ambiguous  = payload.get('@ambiguous')
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        rep = reprlib.Repr()
+        return f"<GelbooruTag(id={self.id}, name={rep.repr(self.name)}, count={self.count})>"
 
 
 class Gelbooru:
@@ -79,10 +114,11 @@ class Gelbooru:
         endpoint.args['id'] = post_id
 
         payload = await self._request(str(endpoint))
-        try:
-            return GelbooruImage(payload[0])
-        except TypeError:
+        if not payload:
             raise GelbooruNotFoundException(f"Could not find a post with the ID {post_id}")
+
+        payload = xmltodict.parse(payload)
+        return GelbooruImage(payload['posts']['post'][0], self)
 
     async def search_posts(self, *, tags: Optional[List[str]] = None,
                            exclude_tags: Optional[List[str]] = None,
@@ -109,13 +145,17 @@ class Gelbooru:
             endpoint.args['tags'] = ' '.join(tags + exclude_tags)
 
         payload = await self._request(str(endpoint))
-        return [GelbooruImage(p) for p in payload] if payload else None
+        if not payload:
+            return None
+
+        payload = xmltodict.parse(payload)
+        return [GelbooruImage(p, self) for p in payload['posts']['post']]
 
     async def tag_list(self, *, name: Union[str, List[str], None] = None,
                        name_pattern: Optional[str] = None,
                        limit: int = 100,
                        sort_by: str = SORT_COUNT,
-                       sort_order: str = SORT_DESC) -> Union[List[dict], dict]:
+                       sort_order: str = SORT_DESC) -> Union[GelbooruTag, List[GelbooruTag]]:
         """
         Get a list of tags, optionally filtered and sorted as needed
 
@@ -127,7 +167,7 @@ class Gelbooru:
             sort_order (): Sort order; either SORT_ASC or SORT_DESC
 
         Returns:
-            list of dict or dict: Returns the first result if querying a single tag
+            list of GelbooruTag or GelbooruTag: Returns the first result if querying a single tag
         """
         endpoint = self._endpoint('tag')
         endpoint.args['limit'] = min(limit, 100)
@@ -146,7 +186,13 @@ class Gelbooru:
         endpoint.args['order'] = sort_order
 
         payload = await self._request(str(endpoint))
-        return payload[0] if isinstance(name, str) and payload else payload
+        if not payload:
+            return []
+
+        payload = xmltodict.parse(payload)
+        return [GelbooruTag(t, self) for t in payload['tags']['tag']] \
+            if isinstance(payload['tags']['tag'], list) \
+            else GelbooruTag(payload['tags']['tag'], self)
 
     # TODO: This endpoint doesn't support json output; we will have to parse it as xml
     # async def get_comments(self, post_id: int) -> List[dict]:
@@ -188,7 +234,7 @@ class Gelbooru:
         endpoint.args['page'] = 'dapi'
         endpoint.args['s'] = s
         endpoint.args['q'] = 'index'
-        endpoint.args['json'] = '1'
+        # endpoint.args['json'] = '1'
 
         # Append API key if available
         if self._api_key:
@@ -207,6 +253,6 @@ class Gelbooru:
 
         return response
 
-    async def _fetch(self, session: aiohttp.ClientSession, url) -> Tuple[int, List[dict]]:
+    async def _fetch(self, session: aiohttp.ClientSession, url) -> Tuple[int, bytes]:
         async with session.get(url) as response:
-            return response.status, await response.json()
+            return response.status, await response.read()
