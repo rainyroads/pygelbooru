@@ -12,6 +12,8 @@ pip install pygelbooru
 ```
 
 ## Usage
+
+### Searching
 The primary use for this library is, naturally, to search for images with specific tags.
 
 This can be done as so:
@@ -38,41 +40,37 @@ str(results[0])
 ```
 
 You can also pull other information returned by the API,
-```python
-class GelbooruImage:
-    """
-    Container for Gelbooru image results.
+https://github.com/FujiMakoto/pygelbooru/blob/master/pygelbooru/gelbooru.py#L32-L47
 
-    Returns the image URL when cast to str
-    """
-    def __init__(self, payload: dict):
-        self.id         = payload.get('id')
-        self.owner      = payload.get('owner')
-        self.created_at = payload.get('created_at')
-        self.file_url   = payload.get('file_url')
-        self.filename   = payload.get('image')
-        self.source     = payload.get('source') or None
-        self.hash       = payload.get('hash')
-        self.height     = payload.get('height')
-        self.width      = payload.get('width')
-        self.rating     = payload.get('q')
-        self.has_sample = payload.get('sample')
-        self.tags       = str(payload.get('tags')).split(' ')
-        self.change     = payload.get('change')
-        self.directory  = payload.get('directory')
+### Searching (Random)
+In addition to searching for a large list of images, PyGelbooru also provides a helper method for when you're really just after a single, random image that matches the specified tags.
+
+This method will automatically pull a random image from the last 20,000 Gelbooru image submissions.
+
+```python
+result = await gelbooru.search_post(tags=['cat ears', '1girl', 'cat hood', 'bell'], exclude_tags=['nude'])
+<GelbooruImage(id=5106718, filename='bbbdfbf9e883...161753514.png', owner='6498')>
 ```
 
-### Other methods
+### Comments
+
+In addition, you can fetch post comments directly from the GelbooruImage container,
+```python
+post = await gelbooru.get_post(5099841)
+await post.get_comments()
+[<GelbooruComment(id=2486074, author='Anonymous', created_at='2020-01-28 08:47')>]
+```
+
+### Tags
 In addition to searching for images, you can pull information on tags as follows,
 ```python
 await gelbooru.tag_list(name='dog ears')
+<GelbooruTag(id=773, name='dog_ears', count=22578)>
 
-{'ambiguous': '0',
- 'count': '22567',
- 'id': '773',
- 'tag': 'dog_ears',
- 'type': 'tag'}
+# Use "name_pattern" to search for partial matches to a specified tag
+await gelbooru.tag_list(name_pattern='splatoon', limit=4)
+[<GelbooruTag(id=892683, name='splatoon_(series)', count=11353)>,
+ <GelbooruTag(id=759189, name='splatoon_2', count=3488)>,
+ <GelbooruTag(id=612372, name='aori_(splatoon)', count=2266)>,
+ <GelbooruTag(id=612374, name='hotaru_(splatoon)', count=2248)>]
 ```
-
-## ToDo
-Support for fetching post comments and checking against gelbooru's deleted image hash list.
