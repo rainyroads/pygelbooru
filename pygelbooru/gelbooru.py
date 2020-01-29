@@ -26,17 +26,15 @@ class GelbooruImage:
     def __init__(self, payload: dict, gelbooru):
         self._gelbooru = gelbooru  # type: Gelbooru
 
-        from pprint import pprint
-        pprint(payload)
-        self.id             = payload.get('@id')
+        self.id             = int(payload.get('@id'))
         self.creator_id     = payload.get('@creator_id')
         self.created_at     = payload.get('@created_at')
         self.file_url       = payload.get('@file_url')
         self.filename       = os.path.basename(urlparse(self.file_url).path)
         self.source         = payload.get('@source') or None
         self.hash           = payload.get('@hash')
-        self.height         = payload.get('@height')
-        self.width          = payload.get('@width')
+        self.height         = int(payload.get('@height'))
+        self.width          = int(payload.get('@width'))
         self.rating         = payload.get('@rating')
         self.has_sample     = payload.get('@sample')
         self.has_comments   = payload.get('@has_comments')
@@ -45,20 +43,31 @@ class GelbooruImage:
         self.change         = payload.get('@change')
         self.directory      = payload.get('@directory')
 
+        self._comments = []  # type: List[GelbooruComment]
+
     async def get_comments(self):
-        # TODO
         if not self.has_comments:
             return []
 
+        # Already cached?
+        if self._comments:
+            return self._comments
+
+        self._comments = await self._gelbooru.get_comments(self)
+        return self._comments
+
     def __str__(self):
         return self.file_url
+
+    def __int__(self):
+        return self.id
 
     def __repr__(self):
         rep = reprlib.Repr()
         return f"<GelbooruImage(id={self.id}, filename={rep.repr(self.filename)}, owner={rep.repr(self.creator_id)})>"
 
 
-class GelbooruTag():
+class GelbooruTag:
     """
     Container for Gelbooru tag results.
 
@@ -67,7 +76,7 @@ class GelbooruTag():
     def __init__(self, payload: dict, gelbooru):
         self._gelbooru = gelbooru  # type: Gelbooru
 
-        self.id         = payload.get('@id')
+        self.id         = int(payload.get('@id'))
         self.name       = payload.get('@name')
         self.count      = int(payload.get('@count', 0))
         self.ambiguous  = payload.get('@ambiguous')
@@ -75,9 +84,47 @@ class GelbooruTag():
     def __str__(self):
         return self.name
 
+    def __int__(self):
+        return self.id
+
     def __repr__(self):
         rep = reprlib.Repr()
         return f"<GelbooruTag(id={self.id}, name={rep.repr(self.name)}, count={self.count})>"
+
+
+class GelbooruComment:
+    """
+    Container for Gelbooru post comments.
+
+    Returns the comment itself when cast to str
+    """
+    def __init__(self, payload: dict, gelbooru, post: Optional[GelbooruImage] = None):
+        self._gelbooru = gelbooru  # type: Gelbooru
+        self._post = post
+
+        self.id         = int(payload.get('@id'))
+        self.post_id    = payload.get('@post_id')
+        self.creator    = payload.get('@creator')
+        self.creator_id = payload.get('@creator_id')
+        self.created_at = payload.get('@created_at')
+        self.body       = payload.get('@body')
+
+    async def get_post(self):
+        if self._post:
+            return self._post
+
+        self._post = await self._gelbooru.get_post(self.post_id)
+        return self._post
+
+    def __str__(self):
+        return self.body
+
+    def __int__(self):
+        return self.id
+
+    def __repr__(self):
+        rep = reprlib.Repr()
+        return f"<GelbooruComment(id={self.id}, author={rep.repr(self.creator)}, created_at={self.created_at})>"
 
 
 class Gelbooru:
@@ -115,12 +162,13 @@ class Gelbooru:
         endpoint = self._endpoint('post')
         endpoint.args['id'] = post_id
 
+        # Fetch and parse XML, then make sure we actually have results
         payload = await self._request(str(endpoint))
-        if not payload:
+        payload = xmltodict.parse(payload)
+        if 'posts' not in payload:
             raise GelbooruNotFoundException(f"Could not find a post with the ID {post_id}")
 
-        payload = xmltodict.parse(payload)
-        return GelbooruImage(payload['posts']['post'][0], self)
+        return GelbooruImage(payload['posts']['post'], self)
 
     async def search_posts(self, *, tags: Optional[List[str]] = None,
                            exclude_tags: Optional[List[str]] = None,
@@ -202,22 +250,30 @@ class Gelbooru:
             if isinstance(payload['tags']['tag'], list) \
             else GelbooruTag(payload['tags']['tag'], self)
 
-    async def get_comments(self, post_id: int) -> List[dict]:
+    async def get_comments(self, post: Union[int, GelbooruImage]) -> List[GelbooruComment]:
         """
         Get comments for the specified post ID
 
         Args:
-            post_id (int): The Gelbooru post id
+            post (int): The Gelbooru post id
 
         Returns:
-            list of dict
+            list of GelbooruComment
         """
         endpoint = self._endpoint('comment')
-        endpoint.args['post_id'] = post_id
+        endpoint.args['post_id'] = int(post)
 
+        # Fetch and parse XML, then make sure we actually have results
         payload = await self._request(str(endpoint))
         payload = xmltodict.parse(payload)
-        return payload
+        if 'comment' not in payload['comments']:
+            return []
+
+        # Single results are not returned as arrays/lists and need to be processed directly instead of iterated
+        post = post if isinstance(post, GelbooruImage) else None  # Enables backreferencing without additional queries
+        return [GelbooruComment(c, self, post) for c in payload['comments']['comment']] \
+            if isinstance(payload['comments']['comment'], list) \
+            else GelbooruComment(payload['comments']['comment'], self, post)
 
     # TODO: Same as above; xml output only
     # async def is_deleted(self, image_md5: str):
