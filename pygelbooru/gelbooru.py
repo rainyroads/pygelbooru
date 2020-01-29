@@ -1,6 +1,8 @@
+import os
 import reprlib
 from pprint import pprint
 from typing import *
+from urllib.parse import urlparse
 
 import aiohttp
 import xmltodict
@@ -30,7 +32,7 @@ class GelbooruImage:
         self.creator_id     = payload.get('@creator_id')
         self.created_at     = payload.get('@created_at')
         self.file_url       = payload.get('@file_url')
-        self.filename       = payload.get('@image')
+        self.filename       = os.path.basename(urlparse(self.file_url).path)
         self.source         = payload.get('@source') or None
         self.hash           = payload.get('@hash')
         self.height         = payload.get('@height')
@@ -144,12 +146,16 @@ class Gelbooru:
         if tags or exclude_tags:
             endpoint.args['tags'] = ' '.join(tags + exclude_tags)
 
+        # Fetch and parse XML, then make sure we actually have results
         payload = await self._request(str(endpoint))
-        if not payload:
-            return None
-
         payload = xmltodict.parse(payload)
-        return [GelbooruImage(p, self) for p in payload['posts']['post']]
+        if 'posts' not in payload:
+            return []
+
+        # Single results are not returned as arrays/lists and need to be processed directly instead of iterated
+        return [GelbooruImage(p, self) for p in payload['posts']['post']] \
+            if isinstance(payload['posts']['post'], list) \
+            else [GelbooruImage(payload['posts']['post'], self)]
 
     async def tag_list(self, *, name: Union[str, List[str], None] = None,
                        name_pattern: Optional[str] = None,
@@ -185,36 +191,33 @@ class Gelbooru:
         endpoint.args['orderby'] = sort_by
         endpoint.args['order'] = sort_order
 
+        # Fetch and parse XML, then make sure we actually have results
         payload = await self._request(str(endpoint))
-        if not payload:
+        payload = xmltodict.parse(payload)
+        if 'tags' not in payload:
             return []
 
-        payload = xmltodict.parse(payload)
+        # Single results are not returned as arrays/lists and need to be processed directly instead of iterated
         return [GelbooruTag(t, self) for t in payload['tags']['tag']] \
             if isinstance(payload['tags']['tag'], list) \
             else GelbooruTag(payload['tags']['tag'], self)
 
-    # TODO: This endpoint doesn't support json output; we will have to parse it as xml
-    # async def get_comments(self, post_id: int) -> List[dict]:
-    #     """
-    #     Get comments for the specified post ID
-    #
-    #     Args:
-    #         post_id (int): The Gelbooru post id
-    #
-    #     Returns:
-    #         list of dict
-    #     """
-    #     endpoint = furl(self.BASE_URL)
-    #     endpoint.args['page'] = 'dapi'
-    #     endpoint.args['s'] = 'comment'
-    #     endpoint.args['q'] = 'index'
-    #     endpoint.args['json'] = '1'
-    #
-    #     endpoint.args['post_id'] = post_id
-    #
-    #     payload = await self._request(str(endpoint))
-    #     return payload
+    async def get_comments(self, post_id: int) -> List[dict]:
+        """
+        Get comments for the specified post ID
+
+        Args:
+            post_id (int): The Gelbooru post id
+
+        Returns:
+            list of dict
+        """
+        endpoint = self._endpoint('comment')
+        endpoint.args['post_id'] = post_id
+
+        payload = await self._request(str(endpoint))
+        payload = xmltodict.parse(payload)
+        return payload
 
     # TODO: Same as above; xml output only
     # async def is_deleted(self, image_md5: str):
@@ -244,7 +247,7 @@ class Gelbooru:
 
         return endpoint
 
-    async def _request(self, url: str) -> List[dict]:
+    async def _request(self, url: str) -> bytes:
         async with aiohttp.ClientSession() as session:
             status_code, response = await self._fetch(session, url)
 
