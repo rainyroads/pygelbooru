@@ -48,7 +48,7 @@ In addition to searching for a large list of images, PyGelbooru also provides a 
 This method will automatically pull a random image from the last 20,000 Gelbooru image submissions.
 
 ```python
-result = await gelbooru.search_post(tags=['cat ears', '1girl', 'cat hood', 'bell'], exclude_tags=['nude'])
+result = await gelbooru.random_post(tags=['cat ears', '1girl', 'cat hood', 'bell'], exclude_tags=['nude'])
 <GelbooruImage(id=5106718, filename='bbbdfbf9e883...161753514.png', owner='6498')>
 ```
 
