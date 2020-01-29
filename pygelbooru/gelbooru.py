@@ -328,7 +328,7 @@ class Gelbooru:
         post = post if isinstance(post, GelbooruImage) else None  # Enables backreferencing without additional queries
         return [GelbooruComment(c, self, post) for c in payload['comments']['comment']] \
             if isinstance(payload['comments']['comment'], list) \
-            else GelbooruComment(payload['comments']['comment'], self, post)
+            else [GelbooruComment(payload['comments']['comment'], self, post)]
 
     async def is_deleted(self, image_md5: str) -> bool:
         """
