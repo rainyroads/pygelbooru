@@ -1,3 +1,4 @@
+import asyncio
 import os
 import reprlib
 from pprint import pprint
@@ -137,7 +138,9 @@ class Gelbooru:
     SORT_ASC   = 'ASC'
     SORT_DESC  = 'DESC'
 
-    def __init__(self, api_key: Optional[str] = None, user_id: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None,
+                 user_id: Optional[str] = None,
+                 loop: Optional[asyncio.AbstractEventLoop] = None):
         """
         API credentials can be obtained here (registration required):
         https://gelbooru.com/index.php?page=account&s=options
@@ -148,6 +151,7 @@ class Gelbooru:
         """
         self._api_key = api_key
         self._user_id = user_id
+        self._loop = None
 
     async def get_post(self, post_id: int) -> Optional[GelbooruImage]:
         """
@@ -275,7 +279,6 @@ class Gelbooru:
             if isinstance(payload['comments']['comment'], list) \
             else GelbooruComment(payload['comments']['comment'], self, post)
 
-    # TODO: Same as above; xml output only
     async def is_deleted(self, image_md5: str) -> bool:
         """
         Check if an image has been deleted from Gelbooru
@@ -312,7 +315,7 @@ class Gelbooru:
         return endpoint
 
     async def _request(self, url: str) -> bytes:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(loop=self._loop) as session:
             status_code, response = await self._fetch(session, url)
 
         if status_code not in [200, 201]:
