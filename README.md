@@ -54,7 +54,7 @@ result = await gelbooru.search_post(tags=['cat ears', '1girl', 'cat hood', 'bell
 
 ### Comments
 
-In addition, you can fetch post comments directly from the GelbooruImage container,
+You can fetch post comments directly from the GelbooruImage container,
 ```python
 post = await gelbooru.get_post(5099841)
 await post.get_comments()
@@ -62,7 +62,7 @@ await post.get_comments()
 ```
 
 ### Tags
-In addition to searching for images, you can pull information on tags as follows,
+Besides searching for images, you can also pull information on tags as follows,
 ```python
 await gelbooru.tag_list(name='dog ears')
 <GelbooruTag(id=773, name='dog_ears', count=22578)>
