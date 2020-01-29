@@ -183,13 +183,13 @@ class Gelbooru:
         Args:
             tags (list of str): A list of tags to search for
             exclude_tags (list of str): A list of tags to EXCLUDE from search results
-            limit (int): Limit the number of results returned. Maximum value allowed is 100.
+            limit (int): Limit the number of results returned. Defaults to 100.
 
         Returns:
             list of GelbooruImage
         """
         endpoint = self._endpoint('post')
-        endpoint.args['limit']  = min(limit, 100)
+        endpoint.args['limit']  = limit
 
         # Apply basic tag formatting
         tags = [tag.strip().lower().replace(' ', '_') for tag in tags] if tags else []
@@ -220,7 +220,7 @@ class Gelbooru:
         Args:
             name (str or list of str): A single tag name to query or a list of tags
             name_pattern (str): A wildcard search for your query using LIKE. (choolgirl would act as *choolgirl* wildcard search.) Cannot be used with names.
-            limit (int): Limit the number of results returned. Maximum value allowed is 100.
+            limit (int): Limit the number of results returned. Defaults to 100.
             sort_by (): Sort by either SORT_COUNT (tag usage count), SORT_NAME, or SORT_DATE
             sort_order (): Sort order; either SORT_ASC or SORT_DESC
 
@@ -228,7 +228,7 @@ class Gelbooru:
             list of GelbooruTag or GelbooruTag: Returns the first result if querying a single tag
         """
         endpoint = self._endpoint('tag')
-        endpoint.args['limit'] = min(limit, 100)
+        endpoint.args['limit'] = limit
 
         # Name filtering
         if name:
