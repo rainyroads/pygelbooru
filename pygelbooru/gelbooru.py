@@ -276,17 +276,25 @@ class Gelbooru:
             else GelbooruComment(payload['comments']['comment'], self, post)
 
     # TODO: Same as above; xml output only
-    # async def is_deleted(self, image_md5: str):
-    #     """
-    #     Check if an image has been deleted from Gelbooru
-    #
-    #     Args:
-    #         image_md5 (str): The md5 hash of the image to check
-    #
-    #     Returns:
-    #         bool
-    #     """
-    #     pass
+    async def is_deleted(self, image_md5: str) -> bool:
+        """
+        Check if an image has been deleted from Gelbooru
+
+        Args:
+            image_md5 (str): The md5 hash of the image to check
+
+        Returns:
+            bool
+        """
+        endpoint = self._endpoint('post')
+        endpoint.args['deleted'] = 'show'
+
+        # Fetch and parse XML
+        payload = await self._request(str(endpoint))
+        payload = xmltodict.parse(payload)
+
+        deleted_md5s = [p['@md5'] for p in payload['posts']['post']]
+        return image_md5 in deleted_md5s
 
     def _endpoint(self, s: str) -> furl:
         endpoint = furl(self.BASE_URL)
