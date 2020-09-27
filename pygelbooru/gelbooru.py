@@ -248,6 +248,8 @@ class Gelbooru:
             raise GelbooruException("Gelbooru returned a malformed response")
         if 'posts' not in payload:
             return []
+        elif 'post' not in payload["posts"]:
+            return []
 
         # Single results are not returned as arrays/lists and need to be processed directly instead of iterated
         result = [GelbooruImage(p, self) for p in payload['posts']['post']] \
