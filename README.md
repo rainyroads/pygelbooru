@@ -68,7 +68,7 @@ await gelbooru.tag_list(name='dog ears')
 <GelbooruTag(id=773, name='dog_ears', count=22578)>
 
 # Use "name_pattern" to search for partial matches to a specified tag
-await gelbooru.tag_list(name_pattern='splatoon', limit=4)
+await gelbooru.tag_list(name_pattern='%splatoon%', limit=4)
 [<GelbooruTag(id=892683, name='splatoon_(series)', count=11353)>,
  <GelbooruTag(id=759189, name='splatoon_2', count=3488)>,
  <GelbooruTag(id=612372, name='aori_(splatoon)', count=2266)>,
