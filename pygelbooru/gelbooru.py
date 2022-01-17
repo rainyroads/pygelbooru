@@ -29,22 +29,22 @@ class GelbooruImage:
     def __init__(self, payload: dict, gelbooru):
         self._gelbooru = gelbooru  # type: Gelbooru
 
-        self.id             = int(payload.get('@id'))
-        self.creator_id     = payload.get('@creator_id')
-        self.created_at     = payload.get('@created_at')
-        self.file_url       = payload.get('@file_url')
+        self.id             = int(payload.get('id'))
+        self.creator_id     = payload.get('creator_id')
+        self.created_at     = payload.get('created_at')
+        self.file_url       = payload.get('file_url')
         self.filename       = os.path.basename(urlparse(self.file_url).path)
-        self.source         = payload.get('@source') or None
-        self.hash           = payload.get('@hash')
-        self.height         = int(payload.get('@height'))
-        self.width          = int(payload.get('@width'))
-        self.rating         = payload.get('@rating')
-        self.has_sample     = payload.get('@sample')
-        self.has_comments   = payload.get('@has_comments')
-        self.has_notes      = payload.get('@has_notes')
-        self.tags           = str(payload.get('@tags')).split(' ')
-        self.change         = payload.get('@change')
-        self.directory      = payload.get('@directory')
+        self.source         = payload.get('source') or None
+        self.hash           = payload.get('hash')
+        self.height         = int(payload.get('height'))
+        self.width          = int(payload.get('width'))
+        self.rating         = payload.get('rating')
+        self.has_sample     = payload.get('sample')
+        self.has_comments   = payload.get('has_comments')
+        self.has_notes      = payload.get('has_notes')
+        self.tags           = str(payload.get('tags')).split(' ')
+        self.change         = payload.get('change')
+        self.directory      = payload.get('directory')
 
         self._comments = []  # type: List[GelbooruComment]
 
@@ -80,10 +80,10 @@ class GelbooruTag:
     def __init__(self, payload: dict, gelbooru):
         self._gelbooru = gelbooru  # type: Gelbooru
 
-        self.id         = int(payload.get('@id'))
-        self.name       = payload.get('@name')
-        self.count      = int(payload.get('@count', 0))
-        self.ambiguous  = payload.get('@ambiguous')
+        self.id         = int(payload.get('id'))
+        self.name       = payload.get('name')
+        self.count      = int(payload.get('count', 0))
+        self.ambiguous  = payload.get('ambiguous')
 
     def __str__(self):
         return self.name
@@ -107,12 +107,12 @@ class GelbooruComment:
         self._gelbooru = gelbooru  # type: Gelbooru
         self._post = post
 
-        self.id         = int(payload.get('@id'))
-        self.post_id    = payload.get('@post_id')
-        self.creator    = payload.get('@creator')
-        self.creator_id = payload.get('@creator_id')
-        self.created_at = payload.get('@created_at')
-        self.body       = payload.get('@body')
+        self.id         = int(payload.get('id'))
+        self.post_id    = payload.get('post_id')
+        self.creator    = payload.get('creator')
+        self.creator_id = payload.get('creator_id')
+        self.created_at = payload.get('created_at')
+        self.body       = payload.get('body')
 
     async def get_post(self):
         if self._post:
@@ -206,7 +206,7 @@ class Gelbooru:
             raise GelbooruException("Gelbooru returned a malformed response")
 
         # Count is 0? We have no results to fetch then
-        count = int(payload['posts']['@count'])
+        count = int(payload['posts']['count'])
         if not count:
             return None
 
@@ -349,7 +349,7 @@ class Gelbooru:
         payload = await self._request(str(endpoint))
         payload = xmltodict.parse(payload)
 
-        deleted_md5s = [p['@md5'] for p in payload['posts']['post']]
+        deleted_md5s = [p['md5'] for p in payload['posts']['post']]
         return image_md5 in deleted_md5s
 
     def _endpoint(self, s: str) -> furl:
