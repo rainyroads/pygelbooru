@@ -22,7 +22,6 @@ class GelbooruNotFoundException(GelbooruException):
 class GelbooruImage:
     """
     Container for Gelbooru image results.
-
     Returns the image URL when cast to str
     """
 
@@ -73,7 +72,6 @@ class GelbooruImage:
 class GelbooruTag:
     """
     Container for Gelbooru tag results.
-
     Returns the tag name when cast to str
     """
 
@@ -82,7 +80,7 @@ class GelbooruTag:
 
         self.id         = int(payload.get('id'))
         self.name       = payload.get('name')
-        self.count      = int(payload.get('count', 0))
+        self.count      = int(payload.get('@count', 0))
         self.ambiguous  = payload.get('ambiguous')
 
     def __str__(self):
@@ -99,7 +97,6 @@ class GelbooruTag:
 class GelbooruComment:
     """
     Container for Gelbooru post comments.
-
     Returns the comment itself when cast to str
     """
 
@@ -148,7 +145,6 @@ class Gelbooru:
         """
         API credentials can be obtained here (registration required):
         https://gelbooru.com/index.php?page=account&s=options
-
         Args:
             api_key (str): API Key
             user_id (str): User ID
@@ -160,10 +156,8 @@ class Gelbooru:
     async def get_post(self, post_id: int) -> Optional[GelbooruImage]:
         """
         Get a specific Gelbooru post by its ID
-
         Args:
             post_id (int): The post id to lookup
-
         Raises:
             GelbooruNotFoundException: Raised if Gelbooru returns an empty result for this query
         """
@@ -182,11 +176,9 @@ class Gelbooru:
                           exclude_tags: Optional[List[str]] = None) -> Optional[List[GelbooruImage]]:
         """
         Search for and return a single random image with the specified tags.
-
         Args:
             tags (list of str): A list of tags to search for
             exclude_tags (list of str): A list of tags to EXCLUDE from search results
-
         Returns:
             GelbooruImage or None: Returns None if no posts are found with the specified tags.
         """
@@ -206,7 +198,7 @@ class Gelbooru:
             raise GelbooruException("Gelbooru returned a malformed response")
 
         # Count is 0? We have no results to fetch then
-        count = int(payload['posts']['count'])
+        count = int(payload['posts']['@count'])
         if not count:
             return None
 
@@ -221,13 +213,11 @@ class Gelbooru:
                            page: int = 0) -> Union[List[GelbooruImage], GelbooruImage]:
         """
         Search for images with the optionally specified tag(s)
-
         Args:
             tags (list of str): A list of tags to search for
             exclude_tags (list of str): A list of tags to EXCLUDE from search results
             limit (int): Limit the number of results returned. Defaults to 100
             page (int): The page number
-
         Returns:
             list of GelbooruImage or GelbooruImage: Returns a single GelbooruImage of a limit of 1 is supplied
         """
@@ -269,14 +259,12 @@ class Gelbooru:
                        sort_order: str = SORT_DESC) -> Union[GelbooruTag, List[GelbooruTag]]:
         """
         Get a list of tags, optionally filtered and sorted as needed
-
         Args:
             name (str or list of str): A single tag name to query or a list of tags
             name_pattern (str): A wildcard search for your query using LIKE. (choolgirl would act as *choolgirl* wildcard search.) Cannot be used with names.
             limit (int): Limit the number of results returned. Defaults to 100
             sort_by (): Sort by either SORT_COUNT (tag usage count), SORT_NAME, or SORT_DATE
             sort_order (): Sort order; either SORT_ASC or SORT_DESC
-
         Returns:
             list of GelbooruTag or GelbooruTag: Returns the first result if querying a single tag
         """
@@ -310,10 +298,8 @@ class Gelbooru:
     async def get_comments(self, post: Union[int, GelbooruImage]) -> List[GelbooruComment]:
         """
         Get comments for the specified post ID
-
         Args:
             post (int): The Gelbooru post id
-
         Returns:
             list of GelbooruComment
         """
@@ -335,10 +321,8 @@ class Gelbooru:
     async def is_deleted(self, image_md5: str) -> bool:
         """
         Check if an image has been deleted from Gelbooru
-
         Args:
             image_md5 (str): The md5 hash of the image to check
-
         Returns:
             bool
         """
@@ -349,7 +333,7 @@ class Gelbooru:
         payload = await self._request(str(endpoint))
         payload = xmltodict.parse(payload)
 
-        deleted_md5s = [p['md5'] for p in payload['posts']['post']]
+        deleted_md5s = [p['@md5'] for p in payload['posts']['post']]
         return image_md5 in deleted_md5s
 
     def _endpoint(self, s: str) -> furl:
@@ -370,11 +354,9 @@ class Gelbooru:
     def _format_tags(self, tags: list, exclude_tags: list):
         """
         Apply basic tag formatting
-
         Args:
             tags (list of str): A list of tags to search for
             exclude_tags (list of str): A list of tags to EXCLUDE from search results
-
         Returns:
             list of str
         """
