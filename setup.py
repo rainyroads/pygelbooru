@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 setup(
         name='pygelbooru',  # How you named your package folder (MyLib)
         packages=['pygelbooru'],  # Chose the same as "name"
-        version='0.3.1',  # Start with a small number and increase it with every change you make
+        version='0.3.2',  # Start with a small number and increase it with every change you make
         license='gpl-3.0',  # Chose a license from here: https://help.github.com/articles/licensing-a-repository
         description='PyGelbooru is an unofficial and lightweight asynchronous library for the Gelbooru API.',  # Give a short description about your library
         long_description=long_description,
@@ -17,7 +17,7 @@ setup(
         author='Makoto',  # Type in your name
         author_email='FujiMakoto@users.noreply.github.com',  # Type in your E-Mail
         url='https://github.com/FujiMakoto/pygelbooru',  # Provide either the link to your github or to your website
-        download_url='https://github.com/FujiMakoto/pygelbooru/archive/v0.3.1.tar.gz',
+        download_url='https://github.com/FujiMakoto/pygelbooru/archive/v0.3.2.tar.gz',
         keywords=['gelbooru', 'anime', 'artwork', 'anime artwork', 'booru'],  # Keywords that define your package best
         install_requires=[
             'aiohttp',
