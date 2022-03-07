@@ -2,6 +2,7 @@ import asyncio
 import os
 import reprlib
 import xml
+from datetime import datetime
 from random import randint
 from typing import *
 from urllib.parse import urlparse
@@ -28,23 +29,23 @@ class GelbooruImage:
     def __init__(self, payload: dict, gelbooru):
         self._gelbooru = gelbooru  # type: Gelbooru
 
-        self.id             = int(payload.get('id'))
-        self.creator_id     = payload.get('creator_id')
-        self.created_at     = payload.get('created_at')
-        self.file_url       = payload.get('file_url')
-        self.filename       = os.path.basename(urlparse(self.file_url).path)
-        self.source         = payload.get('source') or None
-        self.hash           = payload.get('hash')
-        self.height         = int(payload.get('height'))
-        self.width          = int(payload.get('width'))
-        self.rating         = payload.get('rating')
-        self.has_sample     = payload.get('sample')
-        self.has_comments   = payload.get('has_comments')
-        self.has_notes      = payload.get('has_notes')
-        self.tags           = str(payload.get('tags')).split(' ')
-        self.change         = payload.get('change')
-        self.directory      = payload.get('directory')
-        self._payload       = payload
+        self.id             = int(payload.get('id'))                                    # type: int
+        self.creator_id     = int(payload.get('creator_id', 0)) or None                 # type: Optional[int]
+        self.created_at     = _datetime(payload.get('created_at'))                      # type: Optional[datetime]
+        self.file_url       = payload.get('file_url')                                   # type: str
+        self.filename       = os.path.basename(urlparse(self.file_url).path)            # type: str
+        self.source         = payload.get('source') or None                             # type: Optional[str]
+        self.hash           = payload.get('hash')                                       # type: str
+        self.height         = int(payload.get('height'))                                # type: int
+        self.width          = int(payload.get('width'))                                 # type: int
+        self.rating         = payload.get('rating')                                     # type: str
+        self.has_sample     = bool(payload.get('sample', 0))                            # type: bool
+        self.has_comments   = bool(payload.get('has_comments', 0))                      # type: bool
+        self.has_notes      = payload.get('has_notes', 'false').lower() == 'true'       # type: bool
+        self.tags           = str(payload.get('tags')).split(' ')                       # type: List[str]
+        self.change         = datetime.fromtimestamp(int(payload.get('change', 0)))     # type: datetime
+        self.directory      = payload.get('directory')                                  # type: str
+        self._payload       = payload                                                   # type: dict
 
         self._comments = []  # type: List[GelbooruComment]
 
@@ -239,9 +240,7 @@ class Gelbooru:
             payload = xmltodict.parse(payload)
         except xml.parsers.expat.ExpatError:
             raise GelbooruException("Gelbooru returned a malformed response")
-        if 'posts' not in payload:
-            return []
-        elif 'post' not in payload["posts"]:
+        if 'posts' not in payload or 'post' not in payload["posts"]:
             return []
 
         # Single results are not returned as arrays/lists and need to be processed directly instead of iterated
@@ -382,3 +381,17 @@ class Gelbooru:
     async def _fetch(self, session: aiohttp.ClientSession, url) -> Tuple[int, bytes]:
         async with session.get(url) as response:
             return response.status, await response.read()
+
+
+def _datetime(date: str) -> Optional[datetime]:
+    """
+    Convert a date string to a datetime object
+    Args:
+        date (str): The date string to convert
+    Returns:
+        datetime
+    """
+    try:
+        return datetime.strptime(date, "%a %b %d %H:%M:%S %z %Y")
+    except ValueError:
+        return None
