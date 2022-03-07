@@ -259,7 +259,7 @@ class Gelbooru:
                        name_pattern: Optional[str] = None,
                        limit: int = 100,
                        sort_by: str = SORT_COUNT,
-                       sort_order: str = SORT_DESC) -> Union[GelbooruTag, List[GelbooruTag]]:
+                       sort_order: str = SORT_DESC) -> Optional[Union[GelbooruTag, List[GelbooruTag]]]:
         """
         Get a list of tags, optionally filtered and sorted as needed
         Args:
@@ -290,8 +290,8 @@ class Gelbooru:
         # Fetch and parse XML, then make sure we actually have results
         payload = await self._request(str(endpoint))
         payload = xmltodict.parse(payload)
-        if 'tags' not in payload:
-            return []
+        if 'tags' not in payload or 'tag' not in payload["tags"]:
+            return None
 
         # Single results are not returned as arrays/lists and need to be processed directly instead of iterated
         return [GelbooruTag(t, self) for t in payload['tags']['tag']] \
