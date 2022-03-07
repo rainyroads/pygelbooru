@@ -80,11 +80,11 @@ class GelbooruTag:
     def __init__(self, payload: dict, gelbooru):
         self._gelbooru = gelbooru  # type: Gelbooru
 
-        self.id         = int(payload.get('id'))        # type: int
-        self.name       = payload.get('name')           # type: str
-        self.count      = int(payload.get('count', 0))
-        self.ambiguous  = payload.get('ambiguous')
-        self._payload   = payload
+        self.id         = int(payload.get('id'))            # type: int
+        self.name       = payload.get('name')               # type: str
+        self.count      = int(payload.get('count', 0))      # type: int
+        self.ambiguous  = bool(payload.get('ambiguous', 0)) # type: bool
+        self._payload   = payload                           # type: dict
 
     def __str__(self):
         return self.name
@@ -268,7 +268,7 @@ class Gelbooru:
             sort_by (): Sort by either SORT_COUNT (tag usage count), SORT_NAME, or SORT_DATE
             sort_order (): Sort order; either SORT_ASC or SORT_DESC
         Returns:
-            list of GelbooruTag or GelbooruTag: Returns the first result if querying a single tag
+            list of GelbooruTag or GelbooruTag: Returns the first result if querying a single tag. Returns None if no results are found.
         """
         endpoint = self._endpoint('tag')
         endpoint.args['limit'] = limit
