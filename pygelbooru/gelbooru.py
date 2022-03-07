@@ -44,6 +44,7 @@ class GelbooruImage:
         self.tags           = str(payload.get('tags')).split(' ')
         self.change         = payload.get('change')
         self.directory      = payload.get('directory')
+        self._payload       = payload
 
         self._comments = []  # type: List[GelbooruComment]
 
@@ -82,6 +83,7 @@ class GelbooruTag:
         self.name       = payload.get('name')
         self.count      = int(payload.get('@count', 0))
         self.ambiguous  = payload.get('ambiguous')
+        self._payload   = payload
 
     def __str__(self):
         return self.name
@@ -110,6 +112,7 @@ class GelbooruComment:
         self.creator_id = payload.get('creator_id')
         self.created_at = payload.get('created_at')
         self.body       = payload.get('body')
+        self._payload   = payload
 
     async def get_post(self):
         if self._post:
