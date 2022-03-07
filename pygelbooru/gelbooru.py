@@ -262,7 +262,7 @@ class Gelbooru:
                        name_pattern: Optional[str] = None,
                        limit: int = 100,
                        sort_by: str = SORT_COUNT,
-                       sort_order: str = SORT_DESC) -> Optional[Union[GelbooruTag, List[GelbooruTag]]]:
+                       sort_order: str = SORT_DESC) -> List[GelbooruTag]:
         """
         Get a list of tags, optionally filtered and sorted as needed
         Args:
@@ -299,7 +299,7 @@ class Gelbooru:
         # Single results are not returned as arrays/lists and need to be processed directly instead of iterated
         return [GelbooruTag(t, self) for t in payload['tags']['tag']] \
             if isinstance(payload['tags']['tag'], list) \
-            else GelbooruTag(payload['tags']['tag'], self)
+            else [GelbooruTag(payload['tags']['tag'], self)]
 
     async def get_comments(self, post: Union[int, GelbooruImage]) -> List[GelbooruComment]:
         """
