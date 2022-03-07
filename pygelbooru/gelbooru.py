@@ -107,12 +107,12 @@ class GelbooruComment:
         self._gelbooru = gelbooru  # type: Gelbooru
         self._post = post
 
-        self.id         = int(payload.get('id'))
-        self.post_id    = payload.get('post_id')
-        self.creator    = payload.get('creator')
-        self.creator_id = payload.get('creator_id')
-        self.created_at = payload.get('created_at')
-        self.body       = payload.get('body')
+        self.id         = int(payload.get('@id', 0))
+        self.post_id    = payload.get('@post_id')
+        self.creator    = payload.get('@creator')
+        self.creator_id = payload.get('@creator_id')
+        self.created_at = payload.get('@created_at')
+        self.body       = payload.get('@body')
         self._payload   = payload
 
     async def get_post(self):
