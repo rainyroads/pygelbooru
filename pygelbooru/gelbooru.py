@@ -29,8 +29,8 @@ class GelbooruImage:
     def __init__(self, payload: dict, gelbooru):
         self._gelbooru = gelbooru  # type: Gelbooru
 
-        self.id             = int(payload.get('id'))                                    # type: int
-        self.creator_id     = int(payload.get('creator_id', 0)) or None                 # type: Optional[int]
+        self.id             = int(payload.get('id', 0) or 0)                            # type: int
+        self.creator_id     = int(payload.get('creator_id', 0) or 0) or None            # type: Optional[int]
         self.created_at     = _datetime(payload.get('created_at'))                      # type: Optional[datetime]
         self.file_url       = payload.get('file_url')                                   # type: str
         self.filename       = os.path.basename(urlparse(self.file_url).path)            # type: str
@@ -107,13 +107,13 @@ class GelbooruComment:
         self._gelbooru = gelbooru  # type: Gelbooru
         self._post = post
 
-        self.id         = int(payload.get('@id', 0))
-        self.post_id    = payload.get('@post_id')
-        self.creator    = payload.get('@creator')
-        self.creator_id = payload.get('@creator_id')
-        self.created_at = payload.get('@created_at')
-        self.body       = payload.get('@body')
-        self._payload   = payload
+        self.id         = int(payload.get('@id', 0) or 0)                           # type: int
+        self.post_id    = int(payload.get('@post_id', 0) or 0)                      # type: int
+        self.creator    = payload.get('@creator')                                   # type: str
+        self.creator_id = int(payload.get('@creator_id', 0) or 0)                   # type: int
+        self.created_at = _datetime(payload.get('@created_at'), '%Y-%m-%d %H:%M')   # type: datetime
+        self.body       = payload.get('@body')                                      # type: str
+        self._payload   = payload                                                   # type: dict
 
     async def get_post(self):
         if self._post:
@@ -383,15 +383,16 @@ class Gelbooru:
             return response.status, await response.read()
 
 
-def _datetime(date: str) -> Optional[datetime]:
+def _datetime(date: str, format='%a %b %d %H:%M:%S %z %Y') -> Optional[datetime]:
     """
     Convert a date string to a datetime object
     Args:
         date (str): The date string to convert
+        format (str): The format of the date string
     Returns:
         datetime
     """
     try:
-        return datetime.strptime(date, "%a %b %d %H:%M:%S %z %Y")
+        return datetime.strptime(date, format)
     except ValueError:
         return None
