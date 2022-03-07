@@ -79,9 +79,9 @@ class GelbooruTag:
     def __init__(self, payload: dict, gelbooru):
         self._gelbooru = gelbooru  # type: Gelbooru
 
-        self.id         = int(payload.get('id'))
-        self.name       = payload.get('name')
-        self.count      = int(payload.get('@count', 0))
+        self.id         = int(payload.get('id'))        # type: int
+        self.name       = payload.get('name')           # type: str
+        self.count      = int(payload.get('count', 0))
         self.ambiguous  = payload.get('ambiguous')
         self._payload   = payload
 
