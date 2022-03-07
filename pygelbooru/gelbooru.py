@@ -42,9 +42,13 @@ class GelbooruImage:
         self.has_sample     = bool(payload.get('sample', 0))                            # type: bool
         self.has_comments   = bool(payload.get('has_comments', 0))                      # type: bool
         self.has_notes      = payload.get('has_notes', 'false').lower() == 'true'       # type: bool
+        self.has_children   = payload.get('has_children', 'false').lower() == 'true'    # type: bool
         self.tags           = str(payload.get('tags')).split(' ')                       # type: List[str]
         self.change         = datetime.fromtimestamp(int(payload.get('change', 0)))     # type: datetime
         self.directory      = payload.get('directory')                                  # type: str
+        self.status         = payload.get('status')                                     # type: str
+        self.locked         = bool(int(payload.get('post_locked', 0) or 0))             # type: bool
+        self.score          = int(payload.get('score', 0) or 0)                         # type: int
         self._payload       = payload                                                   # type: dict
 
         self._comments = []  # type: List[GelbooruComment]
