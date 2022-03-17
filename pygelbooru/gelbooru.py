@@ -159,7 +159,7 @@ class Gelbooru:
         """
         self._api_key = api_key
         self._user_id = user_id
-        self._loop = None
+        self._loop = loop
 
     async def get_post(self, post_id: int) -> Optional[GelbooruImage]:
         """
