@@ -29,6 +29,9 @@ class GelbooruImage:
     def __init__(self, payload: dict, gelbooru):
         self._gelbooru = gelbooru  # type: Gelbooru
 
+        # Cross compatability with older Booru API's
+        payload = {k.strip('@'): v for k, v in payload.items()}
+
         self.id             = int(payload.get('id', 0) or 0)                            # type: int
         self.creator_id     = int(payload.get('creator_id', 0) or 0) or None            # type: Optional[int]
         self.created_at     = _datetime(payload.get('created_at'))                      # type: Optional[datetime]
@@ -137,9 +140,11 @@ class GelbooruComment:
         return f"<GelbooruComment(id={self.id}, author={rep.repr(self.creator)}, created_at={self.created_at})>"
 
 
-class Gelbooru:
-    BASE_URL = 'https://gelbooru.com/'
+API_GELBOORU = 'https://gelbooru.com/'
+API_RULE34 = 'https://api.rule34.xxx/'
+API_SAFEBORU = 'https://safebooru.org/'
 
+class Gelbooru:
     SORT_COUNT = 'count'
     SORT_DATE = 'date'
     SORT_NAME = 'name'
@@ -149,17 +154,21 @@ class Gelbooru:
 
     def __init__(self, api_key: Optional[str] = None,
                  user_id: Optional[str] = None,
-                 loop: Optional[asyncio.AbstractEventLoop] = None):
+                 loop: Optional[asyncio.AbstractEventLoop] = None,
+                 api: Optional[str] = API_GELBOORU):
         """
         API credentials can be obtained here (registration required):
         https://gelbooru.com/index.php?page=account&s=options
         Args:
             api_key (str): API Key
             user_id (str): User ID
+            loop (asyncio.AbstractEventLoop): Event loop to use
+            api (str): Gelbooru compatible API endpoint to use
         """
         self._api_key = api_key
         self._user_id = user_id
         self._loop = loop
+        self._base_url = api
 
     async def get_post(self, post_id: int) -> Optional[GelbooruImage]:
         """
@@ -175,6 +184,10 @@ class Gelbooru:
         # Fetch and parse XML, then make sure we actually have results
         payload = await self._request(str(endpoint))
         payload = xmltodict.parse(payload)
+
+        # Cross compatability with older Booru API's
+        payload = {k.strip('@'): v for k, v in payload.items()}
+
         if 'posts' not in payload:
             raise GelbooruNotFoundException(f"Could not find a post with the ID {post_id}")
 
@@ -202,6 +215,9 @@ class Gelbooru:
         payload = await self._request(str(endpoint))
         try:
             payload = xmltodict.parse(payload)
+
+            # Cross compatability with older Booru API's
+            payload = {k.strip('@'): v for k, v in payload.items()}
         except xml.parsers.expat.ExpatError:
             raise GelbooruException("Gelbooru returned a malformed response")
 
@@ -293,6 +309,7 @@ class Gelbooru:
         # Fetch and parse XML, then make sure we actually have results
         payload = await self._request(str(endpoint))
         payload = xmltodict.parse(payload)
+
         if 'tags' not in payload or 'tag' not in payload["tags"]:
             return None
 
@@ -343,7 +360,7 @@ class Gelbooru:
         return image_md5 in deleted_md5s
 
     def _endpoint(self, s: str) -> furl:
-        endpoint = furl(self.BASE_URL)
+        endpoint = furl(self._base_url)
         endpoint.args['page'] = 'dapi'
         endpoint.args['s'] = s
         endpoint.args['q'] = 'index'
