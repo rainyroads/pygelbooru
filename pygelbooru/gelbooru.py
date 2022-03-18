@@ -35,12 +35,12 @@ class GelbooruImage:
         self.file_url       = payload.get('file_url')                                   # type: str
         self.filename       = os.path.basename(urlparse(self.file_url).path)            # type: str
         self.source         = payload.get('source') or None                             # type: Optional[str]
-        self.hash           = payload.get('hash')                                       # type: str
+        self.hash           = payload.get('md5')                                        # type: str
         self.height         = int(payload.get('height'))                                # type: int
         self.width          = int(payload.get('width'))                                 # type: int
         self.rating         = payload.get('rating')                                     # type: str
-        self.has_sample     = bool(payload.get('sample', 0))                            # type: bool
-        self.has_comments   = bool(payload.get('has_comments', 0))                      # type: bool
+        self.has_sample     = payload.get('has_sample', 'false').lower() == 'true'      # type: bool
+        self.has_comments   = payload.get('has_comments', 'false').lower() == 'true'    # type: bool
         self.has_notes      = payload.get('has_notes', 'false').lower() == 'true'       # type: bool
         self.has_children   = payload.get('has_children', 'false').lower() == 'true'    # type: bool
         self.tags           = str(payload.get('tags')).split(' ')                       # type: List[str]
