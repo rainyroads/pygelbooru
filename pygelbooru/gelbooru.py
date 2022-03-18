@@ -142,7 +142,7 @@ class GelbooruComment:
 
 API_GELBOORU = 'https://gelbooru.com/'
 API_RULE34 = 'https://api.rule34.xxx/'
-API_SAFEBORU = 'https://safebooru.org/'
+API_SAFEBOORU = 'https://safebooru.org/'
 
 class Gelbooru:
     SORT_COUNT = 'count'
