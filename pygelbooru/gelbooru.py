@@ -194,7 +194,8 @@ class Gelbooru:
         return GelbooruImage(payload['posts']['post'], self)
 
     async def random_post(self, *, tags: Optional[List[str]] = None,
-                          exclude_tags: Optional[List[str]] = None) -> Optional[List[GelbooruImage]]:
+                          exclude_tags: Optional[List[str]] = None,
+                          rating: Optional[str] = '') -> Optional[List[GelbooruImage]]:
         """
         Search for and return a single random image with the specified tags.
         Args:
@@ -203,6 +204,16 @@ class Gelbooru:
         Returns:
             GelbooruImage or None: Returns None if no posts are found with the specified tags.
         """
+
+        if rating:
+            if rating.lower() not in ('general', 'sensitive', 'questionable', 'explicit'):
+                raise GelbooruException("Unsupported rating")
+
+            if not tags:
+                tags = [f"rating:{rating}"]
+            else:
+                tags.append(f"rating:{rating}")
+
         endpoint = self._endpoint('post')
         endpoint.args['limit'] = 1
 
@@ -229,12 +240,13 @@ class Gelbooru:
         # Otherwise, let's pull a random ID from the number of posts
         offset = randint(0, min(count, 20000))
 
-        return await self.search_posts(tags=tags, exclude_tags=exclude_tags, limit=1, page=offset)
+        return await self.search_posts(tags=tags, exclude_tags=exclude_tags, limit=1, page=offset, rating=rating)
 
     async def search_posts(self, *, tags: Optional[List[str]] = None,
                            exclude_tags: Optional[List[str]] = None,
                            limit: int = 100,
-                           page: int = 0) -> Union[List[GelbooruImage], GelbooruImage]:
+                           page: int = 0,
+                           rating: Optional[str] = '') -> Union[List[GelbooruImage], GelbooruImage]:
         """
         Search for images with the optionally specified tag(s)
         Args:
@@ -242,9 +254,20 @@ class Gelbooru:
             exclude_tags (list of str): A list of tags to EXCLUDE from search results
             limit (int): Limit the number of results returned. Defaults to 100
             page (int): The page number
+            rating (str): must be general, sensitive, questionable or explicit
         Returns:
             list of GelbooruImage or GelbooruImage: Returns a single GelbooruImage of a limit of 1 is supplied
         """
+
+        if rating:
+            if rating.lower() not in ('general', 'sensitive', 'questionable', 'explicit'):
+                raise GelbooruException("Unsupported rating")
+
+            if not tags:
+                tags = [f"rating:{rating}"]
+            else:
+                tags.append(f"rating:{rating}")
+
         endpoint = self._endpoint('post')
         endpoint.args['limit'] = limit
         endpoint.args['pid'] = page
